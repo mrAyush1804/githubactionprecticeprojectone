@@ -1,0 +1,36 @@
+name: Production Issue Opener
+
+# Trigger jab main branch pe push ho
+on:
+  push:
+    branches:
+      - main
+
+# Jobs define karo
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write  # Issue create aur comment ke liye permission
+
+    steps:
+      # Repository checkout karo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Issue create karo
+      - name: Create Issue if Production Push Fails
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Token for authentication
+        run: |
+          # Yeh command ek naya issue banayega
+          gh issue create --title "Production Issue Detected" --body "Push to main branch detected on $(date). Please check the production build."
+
+      # Automatic comment add karo
+      - name: Add Comment to Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Latest issue ka number fetch karo aur comment daalo
+          ISSUE_NUMBER=$(gh issue list --state open --limit 1 --json number -q '.[0].number')
+          gh issue comment $ISSUE_NUMBER --body "Automatic comment: Production push detected at $(date). Check logs for details."
